@@ -173,6 +173,21 @@ class PuppetLint
     $stderr.puts 'Try running `puppet parser validate <file>`' if problems.any? { |p| p[:check] == :syntax }
   end
 
+  # Return the hash for template with variable types.
+  #
+  def get_data_hash
+    all_variables = PuppetLint::Data.tokens.find_all {|t| t.type == :VARIABLE }
+    template_structure = all_variables.map { |t| { variable: t.value, type: find_variable_type(t) } }
+  end
+
+  def find_variable_type(token)
+    variable_content = [:SSTRING, :STRING, :DQPRE, :DQPOST, :DQMID, :HEREDOC, :HEREDOC_PRE].freeze
+    while !variable_content.include?(token.type)
+      token = token.next_token
+    end
+    token.type
+  end
+
   # Public: Determine if PuppetLint found any errors in the manifest.
   #
   # Returns true if errors were found, otherwise returns false.
